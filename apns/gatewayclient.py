@@ -1,5 +1,4 @@
-import logging
-
+from twisted.logger import Logger
 from twisted.internet import defer, ssl
 from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 
@@ -7,7 +6,7 @@ from apns.errorresponse import ErrorResponse
 from apns.listenable import Listenable
 
 
-logger = logging.getLogger(__name__)
+logger = Logger()
 
 
 class GatewayClientError(Exception):
@@ -31,8 +30,8 @@ class GatewayClient(Protocol):
 
     @defer.inlineCallbacks
     def connectionMade(self):
-        logger.debug('Gateway connection made: %s:%d', self.factory.hostname,
-                     self.factory.port)
+        logger.debug('Gateway connection made: {host}:{port}',
+                     host=self.factory.hostname, port=self.factory.port)
         yield self.factory.connectionMade(self)
 
     @defer.inlineCallbacks
@@ -84,21 +83,22 @@ class GatewayClientFactory(ReconnectingClientFactory, Listenable):
 
     @defer.inlineCallbacks
     def errorReceived(self, error):
-        logger.debug('Gateway error received: %s', error)
+        logger.debug('Gateway error received: {error!s}', error=error)
         yield self.dispatchEvent(self.EVENT_ERROR_RECEIVED, error)
 
     @defer.inlineCallbacks
     def clientConnectionFailed(self, connector, reason):
-        logger.debug('Gateway connection failed: %s',
-                     reason.getErrorMessage())
+        logger.debug('Gateway connection failed: {reason}',
+                     reason=reason.getErrorMessage())
         yield self._onConnectionLost()
         yield ReconnectingClientFactory.clientConnectionFailed(self,
                                                                connector,
                                                                reason)
+
     @defer.inlineCallbacks
     def clientConnectionLost(self, connector, reason):
-        logger.debug('Gateway connection lost: %s',
-                     reason.getErrorMessage())
+        logger.debug('Gateway connection lost: {reason}',
+                     reason=reason.getErrorMessage())
         yield self._onConnectionLost()
         yield ReconnectingClientFactory.clientConnectionLost(self,
                                                              connector,

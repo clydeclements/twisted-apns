@@ -1,5 +1,4 @@
-import logging
-
+from twisted.logger import Logger
 from twisted.internet import defer, ssl
 from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 
@@ -7,7 +6,7 @@ from apns.feedback import Feedback
 from apns.listenable import Listenable
 
 
-logger = logging.getLogger(__name__)
+logger = Logger()
 
 
 class FeedbackClient(Protocol):
@@ -16,8 +15,8 @@ class FeedbackClient(Protocol):
     by FeedbackClientFactory and generally should not be used standalone.
     """
     def connectionMade(self):
-        logger.debug('Feedback connection made: %s:%d', self.factory.hostname,
-                     self.factory.port)
+        logger.debug('Feedback connection made: {host}:{port}',
+                     host=self.factory.hostname, port=self.factory.port)
 
     @defer.inlineCallbacks
     def dataReceived(self, data):
@@ -54,19 +53,19 @@ class FeedbackClientFactory(ReconnectingClientFactory, Listenable):
 
     @defer.inlineCallbacks
     def feedbacksReceived(self, feedbacks):
-        logger.debug('Feedbacks received: %s', feedbacks)
+        logger.debug('Feedbacks received: {feedbacks!s}', feedbacks=feedbacks)
         yield self.dispatchEvent(self.EVENT_FEEDBACKS_RECEIVED, feedbacks)
 
     def clientConnectionFailed(self, connector, reason):
-        logger.debug('Feedback connection failed: %s',
-                     reason.getErrorMessage())
+        logger.debug('Feedback connection failed: {reason}',
+                     reason=reason.getErrorMessage())
         return ReconnectingClientFactory.clientConnectionFailed(self,
                                                                 connector,
                                                                 reason)
 
     def clientConnectionLost(self, connector, reason):
-        logger.debug('Feedback connection lost: %s',
-                     reason.getErrorMessage())
+        logger.debug('Feedback connection lost: {reason}',
+                     reason=reason.getErrorMessage())
         return ReconnectingClientFactory.clientConnectionLost(self,
                                                               connector,
                                                               reason)
